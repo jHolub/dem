@@ -1,20 +1,10 @@
-<form action="./" method="GET">
-    X od <input type="test" name="Xfrom">
-    X do <input type="text" name="Xto">
-    Y od<input type="test" name="Yfrom">
-    Y do <input type="text" name="Yto">
-
-    <input type="submit" value="exec">
-</form>
-
-
-
-
 <?php
+
 $txt_file = file_get_contents('DMT.txt');
 $matrix = array();
 $rows = explode("\n", $txt_file);
 array_shift($rows);
+
 for ($i = 0; $i < count($rows); $i++) {
 
     $row_data = explode("\t", $rows[$i]);
@@ -24,56 +14,6 @@ for ($i = 0; $i < count($rows); $i++) {
 }
 
 
-
-if (isset($_GET['Xfrom'])) {
-
-    for ($xfrom = $_GET['Xfrom']; $xfrom < $_GET['Xto']; $xfrom++) {
-        for ($yfrom = $_GET['Yfrom']; $yfrom < $_GET['Yto']; $yfrom++) {
-
-            $matrix[$xfrom][$yfrom] = $matrix[$xfrom][$yfrom] + 10;
-        }
-    }
-}
-
-function show($matrix) {
-
-
-    echo "<table style='width: 8000px;border-collapse: collapse'>";
-    $td = "<td>-</td>";
-    for ($x = 0; $x < count($matrix); $x++) {
-        $td = $td . "<td>" . $x . "</td>";
-    }
-    echo "<tr>" . $td . "</tr>";
-
-    for ($y = 300; $y >= 0; $y--) {
-
-        echo "<tr><td>" . $y . "</td>";
-
-        for ($x = 0; $x < 300; $x++) {
-
-            if ($_GET['Xfrom'] == $x && $_GET['Yfrom'] == $y) {
-                echo "<td style='background-color: red;border: 1px solid gray;'>" . $matrix[$x][$y] . ' </td>';
-            } else {
-
-                echo "<td>" . $matrix[$x][$y] . ' </td>';
-            }
-        }
-        echo '</tr>';
-    }
-    $td = "<td>-</td>";
-    for ($x = 0; $x < count($matrix); $x++) {
-        $td = $td . "<td>" . $x . "</td>";
-    }
-    echo "<tr>" . $td . "</tr>";
-
-    echo '</table>';
-}
-
-//show($matrix);
-//exit();
-
-
-$time_start = microtime(true);
 
 $slope = array();
 //array(X,'↙', '←', '↖', '↑','↗' ,'→','↘','↓')
@@ -91,7 +31,7 @@ for ($x = 0; $x < count($matrix); $x++) {
     for ($y = 0; $y < count($matrix[$x]); $y++) {
 
         $slope[$x][$y] = $key[1][1];
-        $min = 0;
+        $min = $matrix[$x][$y];
 
         for ($i = -1; $i < 2; $i++) {
             for ($j = -1; $j < 2; $j++) {
@@ -99,12 +39,12 @@ for ($x = 0; $x < count($matrix); $x++) {
                 $dif = $matrix[$x][$y] - $matrix[$x + $i][$y + $j];
                 if ((abs($i) + abs($j)) == 2) {
                     $div = $dif / pow(2, 0.5);
-                    if ($div > $min) {
+                    if ($div < $min) {
                         $min = $div;
                         $slope[$x][$y] = $key[$i + 1][$j + 1];
                     }
                 } else {
-                    if ($dif > $min) {
+                    if ($dif < $min) {
                         $min = $dif;
                         $slope[$x][$y] = $key[$i + 1][$j + 1];
                     }
@@ -113,13 +53,15 @@ for ($x = 0; $x < count($matrix); $x++) {
         }
     }
 }
-$time_catch = microtime(true);
+
+
 $catchment = array();
 $dd = array(
     array(5, 6, 7),
     array(4, 9, 8),
     array(3, 2, 1)
 );
+
 // determination catchment
 for ($x = 0; $x < count($slope); $x++) {
     for ($y = 0; $y < count($slope[$x]); $y++) {
@@ -153,11 +95,6 @@ for ($x = 0; $x < count($slope); $x++) {
     }
 }
 
-echo 'Total execution time in seconds: ' . (microtime(true) - $time_start) . " catch " . (microtime(true) - $time_catch) . "<br>";
-
-
-
-$time_con = microtime(true);
 // flow accumulation
 //start iteration
 $iter = 0;
@@ -238,84 +175,4 @@ while ($change != 0) {
             $catchment[$x][$y] = $sum;
         }
     }
-    //echo $iter . " " . $change . "<br>";
 }
-
-echo 'Total execution time in seconds: ' . (microtime(true) - $time_start) . " con " . (microtime(true) - $time_con);
-
-echo "<table style='width: 8000px;border-collapse: collapse'>";
-$td = "<td>-</td>";
-for ($x = 0; $x < count($matrix); $x++) {
-    $td = $td . "<td>" . $x . "</td>";
-}
-echo "<tr>" . $td . "</tr>";
-
-for ($y = 300; $y >= 0; $y--) {
-
-    echo "<tr><td>" . $y . "</td>";
-
-    for ($x = 0; $x < 300; $x++) {
-
-      //  echo "<td style='border: 1px solid gray;'>" . $vizu[$slope[$x][$y]] . ' </td>';
-         //echo "<td>" . $slope[$x][$y] . ' </td>';
-        
-        
-        if ($catchment[$x][$y] == 0) {
-            echo "<td>" . $catchment[$x][$y] . ' </td>';
-        } elseif ($catchment[$x][$y] > 0 && $catchment[$x][$y] < 10) {
-        echo "<td style='background-color: Purple;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';
-        } elseif ($catchment[$x][$y] >= 10 && $catchment[$x][$y] < 30) {
-            echo "<td style='background-color: blue;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';
-        } elseif ($catchment[$x][$y] >= 30 && $catchment[$x][$y] < 50) {
-            echo "<td style='background-color:  Aqua;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';
-        } elseif ($catchment[$x][$y] >= 50 && $catchment[$x][$y] < 75) {
-            echo "<td style='background-color: Lime;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';
-        } elseif ($catchment[$x][$y] >= 75 && $catchment[$x][$y] < 100) {
-            echo "<td style='background-color: #7CFC00;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';
-        } elseif ($catchment[$x][$y] >= 100 && $catchment[$x][$y] < 150) {
-            echo "<td style='background-color: yellow;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';
-        } elseif ($catchment[$x][$y] >= 150 && $catchment[$x][$y] < 250) {
-            echo "<td style='background-color: orange;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';
-        }else{
-            echo "<td style='background-color: red;border: 1px solid gray;'>" . (int)$catchment[$x][$y] . ' </td>';   
-        }
-
-        
-        
-    }
-    echo '</tr>';
-}
-
-$td = "<td>-</td>";
-for ($x = 0; $x < count($matrix); $x++) {
-    $td = $td . "<td>" . $x . "</td>";
-}
-echo "<tr>" . $td . "</tr>";
-
-echo '</table>';
-
-
-/*
-$catchment = array();
-
-for ($x = 0; $x < count($slope); $x++) {
-    for ($y = 0; $y < count($slope[$x]); $y++) {
-
-        $di = $s[$slope[$x][$y]];
-        $de = $slope[$x + $di[0]][$y + $di[1]];
-
-        // $catchment[$x][$y] = $matrix[$x][$y] . " " .$matrix[$x + $di[0]][$y + $di[1]];
-        $catchment[$x][$y] = "I";
-        if ($di == 0)
-            $catchment[$x][$y] = "O";
-        if ($di == 0 || $de == 0)
-            continue;
-
-        $dif = abs($slope[$x][$y] - $de);
-
-        if ($dif > 1 && $dif < 7) {
-            $catchment[$x][$y] = "X";
-        }
-    }
-}
-*/
